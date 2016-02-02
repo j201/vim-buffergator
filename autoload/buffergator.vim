@@ -71,6 +71,9 @@ endif
 if !exists("g:buffergator_mru_cycle_local_to_window")
     let g:buffergator_mru_cycle_local_to_window = 1
 endif
+if !exists("g:buffergator_relative_numbering")
+    let g:buffergator_relative_numbering = 0
+endif
 " 1}}}
 
 " Script Data and Variables {{{1
@@ -1271,16 +1274,25 @@ function! s:NewBufferCatalogViewer()
         call self.setup_buffer_syntax()
         let self.jump_map = {}
         let l:initial_line = 1
+
+        for l:idx in range(len(self.buffers_catalog))
+            if self.buffers_catalog[l:idx].is_current
+                let self.current_buffer_index = l:idx + 1
+                break
+            endif
+        endfor
+
         for l:bufinfo in self.buffers_catalog
             if self.calling_bufnum == l:bufinfo.bufnum
                 let l:initial_line = line("$")
             endif
 
-            if l:bufinfo.is_current
-              let self.current_buffer_index = line("$")
+            if g:buffergator_relative_numbering && self.current_buffer_index != -1 && !l:bufinfo.is_current
+                let l:bufnum_str = s:_format_filled(abs(line('$') - self.current_buffer_index), 3, 1, 0)
+            else
+                let l:bufnum_str = s:_format_filled(l:bufinfo.bufnum, 3, 1, 0)
             endif
 
-            let l:bufnum_str = s:_format_filled(l:bufinfo.bufnum, 3, 1, 0)
             let l:line = "[" . l:bufnum_str . "]"
 
             let l:line .= s:_format_filled(self.line_symbols(l:bufinfo),4,-1,0)
